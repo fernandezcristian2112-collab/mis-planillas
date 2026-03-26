@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planillas SS — Cloud Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCoVW5sjDlzPv0NLYrY5L--PqHVckFr904",
+    authDomain: "negocioplanillasetramites.firebaseapp.com",
+    projectId: "negocioplanillasetramites",
+    storageBucket: "negocioplanillasetramites.firebasestorage.app",
+    messagingSenderId: "357386415830",
+    appId: "1:357386415830:web:75a7c3dfd9c91352e32377",
+    measurementId: "G-325WEY76B2"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const colRef = collection(db, "planillas");
+
+  let registros = [];
+  const riesgoClass = { I:'r1', II:'r2', III:'r3', IV:'r4', V:'r5' };
+
+  onSnapshot(query(colRef, orderBy("id", "desc")), (snapshot) => {
+    registros = snapshot.docs.map(doc => ({ ...doc.data(), docId: doc.id }));
+    poblarFiltroMes();
+    render();
+  });
+
+  document.getElementById('cedula').addEventListener('input', function(e) {
+    const busqueda = e.target.value.trim();
+    if (busqueda.length > 4) {
+      const cliente = registros.find(r => r.cedula === busqueda);
+      if (cliente) {
+        document.getElementById('nombre').value = cliente.nombre;
+        document.getElementById('celular').value = cliente.celular;
+        document.getElementById('correo').value = cliente.correo || '';
+        e.target.style.borderColor = '#3fb950';
+      }
+    }
+  });
+
+  window.addRegistro = async function() {
+    const data = {
+      id: Date.now(),
+      fecha: document.getElementById('fecha').value,
+      mesCotizacion: document.getElementById('mesCotizacion').value,
+      nombre: document.getElementById('nombre').value.trim(),
+      cedula: document.getElementById('cedula').value.trim().replace(/\D/g,''),
+      celular: document.getElementById('celular').value.trim().replace(/\D/g,''),
+      correo: document.getElementById('correo').value.trim(),
+      riesgo: document.getElementById('riesgo').value,
+      ganancia: parseFloat(document.getElementById('ganancia').value)
+    };
+    if (!data.nombre || !data.cedula) return alert('Completa Nombre y Cédula.');
+    try {
+      await addDoc(colRef, data);
+      ['nombre','cedula','celular','correo'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('ganancia').value = '50000';
+    } catch (e) { alert("Error: " + e); }
+  };
+
+  window.deleteRegistro = async function(docId) {
+    if (confirm('¿Eliminar registro?')) await deleteDoc(doc(db, "planillas", docId));
+  };
+
+  // FUNCIÓN PARA EXPORTAR A EXCEL
+  window.exportarExcel = function() {
+    const filter = document.getElementById('filtroMes').value;
+    const filtrados = filter === 'todos' ? registros : registros.filter(r => r.fecha.substring(0, 7) === filter);
+    
+    if (filtrados.length === 0) return alert("No hay datos para exportar");
+
+    const dataExcel = filtrados.map(r => ({
+      "Fecha Registro": r.fecha,
+      "Mes Cotización": r.mesCotizacion,
+      "Cliente": r.nombre,
+      "Cédula": r.cedula,
+      "Celular": r.celular,
+      "Riesgo": r.riesgo,
+      "Ganancia COP": r.ganancia
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataExcel);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Planillas");
+    XLSX.writeFile(wb, `Reporte_Planillas_${filter}.xlsx`);
+  };
+
+  function formatCOP(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
+  function getMesKey(f) { return f.substring(0, 7); }
+
+  window.render = function() {
+    const filter = document.getElementById('filtroMes').value;
+    const filtrados = filter === 'todos' ? registros : registros.filter(r => getMesKey(r.fecha) === filter);
+    const rows = filtrados.map(r => `
+      <tr>
+        <td>${r.fecha}</td>
+        <td style="color:#d29922">${r.mesCotizacion || '—'}</td>
+        <td><b>${r.nombre}</b><br><small>CC: ${r.cedula}</small></td>
+        <td><span class="badge-riesgo ${riesgoClass[r.riesgo]}">Riesgo ${r.riesgo}</span></td>
+        <td style="color:#3fb950; font-weight:700">${formatCOP(r.ganancia)}</td>
+        <td><button class="btn-del" onclick="deleteRegistro('${r.docId}')">✕</button></td>
+      </tr>`).join('');
+    document.getElementById('tableWrapper').innerHTML = filtrados.length === 0 ? 
+      '<p style="padding:40px; text-align:center; color:#8b949e;">Sin registros</p>' : 
+      `<table><thead><tr><th>Registro</th><th>Mes Cotiz.</th><th>Cliente</th><th>Riesgo</th><th>Ganancia</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    updateStats();
+  };
+
+  function updateStats() {
+    const total = registros.reduce((s,r) => s + r.ganancia, 0);
+    const hoy = new Date().toISOString().substring(0,7);
+    const mes = registros.filter(r => getMesKey(r.fecha) === hoy);
+    document.getElementById('statTotal').textContent = formatCOP(total);
+    document.getElementById('statMes').textContent = formatCOP(mes.reduce((s,r) => s + r.ganancia, 0));
+    document.getElementById('statClientes').textContent = new Set(registros.map(r => r.cedula)).size;
+  }
+
+  function poblarFiltroMes() {
+    const sel = document.getElementById('filtroMes');
+    const actual = sel.value;
+    const meses = [...new Set(registros.map(r => getMesKey(r.fecha)))].sort().reverse();
+    sel.innerHTML = '<option value="todos">Todos los meses</option>' + 
+      meses.map(m => `<option value="${m}" ${m===actual?'selected':''}>${m}</option>`).join('');
+  }
+
+  window.abrirCierre = function() {
+    const hoy = new Date().toISOString().substring(0,7);
+    const delMes = registros.filter(r => getMesKey(r.fecha) === hoy);
+    const total = delMes.reduce((s,r) => s + r.ganancia, 0);
+    document.getElementById('modalContent').innerHTML = `
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #30363d"><span>Mes:</span><b>${hoy}</b></div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #30363d"><span>Trámites:</span><b>${delMes.length}</b></div>
+      <div style="display:flex; justify-content:space-between; padding:15px 0; color:#3fb950; font-size:20px"><span>TOTAL:</span><b>${formatCOP(total)}</b></div>
+    `;
+    document.getElementById('modalBg').style.display = 'flex';
+  };
+
+  window.onload = () => {
+    document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('mesCotizacion').value = new Date().toISOString().substring(0, 7);
+  };
+</script>
+
+<style>
+  :root { --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --border: #30363d; --accent: #58a6ff; --accent2: #3fb950; --text: #e6edf3; --muted: #8b949e; --gold: #d29922; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; padding: 20px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 25px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .stat-value { font-size: 24px; font-weight: 800; margin-top: 5px; }
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+  .field-group { display: flex; flex-direction: column; gap: 8px; }
+  label { font-size: 11px; color: var(--muted); text-transform: uppercase; font-family: 'Space Mono', monospace; }
+  input, select { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); font-size: 14px; outline: none; width: 100%; }
+  .btn-add { background: var(--accent2); color: #000; border: none; border-radius: 10px; padding: 16px; font-weight: 800; cursor: pointer; margin-top: 25px; width: 100%; text-transform: uppercase; }
+  .btn-cierre { background: var(--gold); color: #000; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 700; cursor: pointer; font-size: 13px; }
+  .btn-excel { background: #238636; color: white; border: none; border-radius: 8px; padding: 10px 15px; font-weight: 700; cursor: pointer; font-size: 12px; }
+  .table-container { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-top: 20px; }
+  table { width: 100%; border-collapse: collapse; min-width: 800px; }
+  th { background: var(--surface2); padding: 15px; font-size: 11px; color: var(--muted); text-align: left; }
+  td { padding: 15px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .badge-riesgo { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+  .r1 { background: rgba(63,185,80,0.2); color: #3fb950; }
+  .btn-del { background: none; border: none; color: #f78166; cursor: pointer; font-size: 18px; }
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 30px; width: 100%; max-width: 400px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Planillas Negocio — <span>Cloud ☁️</span></h1>
+    <button class="btn-cierre" onclick="abrirCierre()">📊 Cierre Mensual</button>
+  </header>
+  
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Ganancia Histórica</div><div class="stat-value" id="statTotal">$0</div></div>
+    <div class="stat"><div class="stat-label">Ganancia Mes Actual</div><div class="stat-value" style="color:var(--gold)" id="statMes">$0</div></div>
+    <div class="stat"><div class="stat-label">Clientes Únicos</div><div class="stat-value" style="color:var(--accent)" id="statClientes">0</div></div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-grid">
+      <div class="field-group"><label>Fecha Registro</label><input type="date" id="fecha"></div>
+      <div class="field-group"><label>Mes Cotización</label><input type="month" id="mesCotizacion"></div>
+      <div class="field-group"><label>Cédula Cliente</label><input type="text" id="cedula" placeholder="12345..."></div>
+      <div class="field-group"><label>Nombre Completo</label><input type="text" id="nombre"></div>
+      <div class="field-group"><label>Celular</label><input type="text" id="celular"></div>
+      <div class="field-group"><label>Correo</label><input type="email" id="correo"></div>
+      <div class="field-group"><label>Riesgo ARL</label><select id="riesgo"><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></div>
+      <div class="field-group"><label>Ganancia ($)</label><input type="number" id="ganancia" value="50000"></div>
+    </div>
+    <button class="btn-add" onclick="addRegistro()">+ Guardar en Google Cloud</button>
+  </div>
+
+  <div style="margin-bottom:15px; display:flex; align-items:center; gap:10px; flex-wrap: wrap;">
+    <span style="font-size:12px; color:var(--muted)">FILTRAR REGISTROS:</span>
+    <select id="filtroMes" onchange="render()" style="max-width:180px"></select>
+    <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Excel</button>
+  </div>
+
+  <div class="table-container">
+    <div id="tableWrapper"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg" onclick="this.style.display='none'">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2 style="margin-bottom:20px">📊 Cierre del Mes</h2>
+    <div id="modalContent"></div>
+    <button class="btn-add" onclick="document.getElementById('modalBg').style.display='none'">Cerrar</button>
+  </div>
+</div>
+</body>
+</html>
