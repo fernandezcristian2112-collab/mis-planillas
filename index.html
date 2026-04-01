@@ -26,7 +26,9 @@
   const colRef = collection(db, "planillas");
 
   let registros = [];
-  const riesgoClass = { I:'r1', II:'r2', III:'r3', IV:'r4', V:'r5' };
+  
+  // SOLUCIÓN COLORES: Ahora acepta tanto Romanos como números normales
+  const riesgoClass = { I:'r1', II:'r2', III:'r3', IV:'r4', V:'r5', '1':'r1', '2':'r2', '3':'r3', '4':'r4', '5':'r5' };
 
   onSnapshot(query(colRef, orderBy("id", "desc")), (snapshot) => {
     registros = snapshot.docs.map(doc => ({ ...doc.data(), docId: doc.id }));
@@ -34,7 +36,6 @@
     render();
   });
 
-  // Autocompletado de clientes (¡Esta parte es genial para no repetir nombres!)
   document.getElementById('cedula').addEventListener('input', function(e) {
     const busqueda = e.target.value.trim();
     if (busqueda.length > 4) {
@@ -74,10 +75,10 @@
 
   window.exportarExcel = function() {
     const filter = document.getElementById('filtroMes').value;
-    const filtrados = filter === 'todos' ? registros : registros.filter(r => r.fecha.substring(0, 7) === filter);
+    const filtrados = filter === 'todos' ? registros : registros.filter(r => getMesKey(r.fecha) === filter);
     if (filtrados.length === 0) return alert("No hay datos para exportar");
     const dataExcel = filtrados.map(r => ({
-      "Fecha Registro": r.fecha,
+      "Fecha Registro": (r.fecha === 'undefined' || !r.fecha) ? 'Sin fecha' : r.fecha,
       "Mes Cotización": r.mesCotizacion,
       "Cliente": r.nombre,
       "Cédula": r.cedula,
@@ -92,44 +93,50 @@
   };
 
   function formatCOP(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
-  function getMesKey(f) { return f.substring(0, 7); }
+  
+  // SOLUCIÓN UNDEFINED: Si un registro viejo no tiene fecha, lo protege
+  function getMesKey(f) { 
+    if (!f || f === 'undefined') return 'Sin Fecha';
+    return f.substring(0, 7); 
+  }
 
   window.render = function() {
     const filter = document.getElementById('filtroMes').value;
     const filtrados = filter === 'todos' ? registros : registros.filter(r => getMesKey(r.fecha) === filter);
     
-    const rows = filtrados.map(r => `
+    const rows = filtrados.map(r => {
+      const riesgoLimpio = r.riesgo ? r.riesgo.trim() : 'I';
+      // Aquí aseguramos que el color no falle si no encuentra la clase
+      const claseRiesgo = riesgoClass[riesgoLimpio] || 'r1'; 
+      return `
       <tr>
-        <td>${r.fecha}</td>
+        <td>${(!r.fecha || r.fecha === 'undefined') ? '—' : r.fecha}</td>
         <td style="color:#d29922">${r.mesCotizacion || '—'}</td>
         <td><b>${r.nombre}</b><br><small>CC: ${r.cedula}</small></td>
-        <td><span class="badge-riesgo ${riesgoClass[r.riesgo.trim()]}">Riesgo ${r.riesgo}</span></td>
+        <td><span class="badge-riesgo ${claseRiesgo}">Riesgo ${riesgoLimpio}</span></td>
         <td style="color:#3fb950; font-weight:700">${formatCOP(r.ganancia)}</td>
         <td><button class="btn-del" onclick="deleteRegistro('${r.docId}')">✕</button></td>
-      </tr>`).join('');
+      </tr>`
+    }).join('');
 
     document.getElementById('tableWrapper').innerHTML = filtrados.length === 0 ? 
       '<p style="padding:40px; text-align:center; color:#8b949e;">Sin registros</p>' : 
       `<table><thead><tr><th>Registro</th><th>Mes Cotiz.</th><th>Cliente</th><th>Riesgo</th><th>Ganancia</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
     
-    // Aquí pasamos el filtro a las estadísticas
     updateStats(filter);
   };
 
-  // MEJORA: Estadísticas dinámicas según el mes seleccionado
   function updateStats(filter) {
     const totalHistorico = registros.reduce((s,r) => s + r.ganancia, 0);
     const hoy = new Date().toISOString().substring(0,7);
-    
-    // Si el usuario elige un mes, mostramos ese. Si elige "todos", mostramos el mes actual por defecto.
     const mesABuscar = (filter === 'todos') ? hoy : filter;
+    
     const registrosDelMes = registros.filter(r => getMesKey(r.fecha) === mesABuscar);
     const gananciaMes = registrosDelMes.reduce((s,r) => s + r.ganancia, 0);
 
     document.getElementById('statTotal').textContent = formatCOP(totalHistorico);
     document.getElementById('statMes').textContent = formatCOP(gananciaMes);
     
-    // Actualizamos el nombre de la tarjeta para que sepas qué estás viendo
     const labelMes = document.querySelector('.stat:nth-child(2) .stat-label');
     labelMes.textContent = (filter === 'todos') ? `Ganancia Mes Actual (${hoy})` : `Ganancia de ${filter}`;
     
@@ -139,12 +146,11 @@
   function poblarFiltroMes() {
     const sel = document.getElementById('filtroMes');
     const actual = sel.value || 'todos';
-    const meses = [...new Set(registros.map(r => getMesKey(r.fecha)))].sort().reverse();
+    const meses = [...new Set(registros.map(r => getMesKey(r.fecha)))].filter(m => m !== 'Sin Fecha').sort().reverse();
     sel.innerHTML = '<option value="todos">Todos los meses</option>' + 
       meses.map(m => `<option value="${m}" ${m===actual?'selected':''}>${m}</option>`).join('');
   }
 
-  // MEJORA: El cierre mensual ahora también respeta el filtro
   window.abrirCierre = function() {
     const filter = document.getElementById('filtroMes').value;
     const hoy = new Date().toISOString().substring(0,7);
