@@ -7,6 +7,120 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+<style>
+  /* --- ESTILOS ORIGINALES DE TU APP --- */
+  :root { --bg: #040a12; --surface: rgba(22, 27, 34, 0.85); --surface2: rgba(33, 38, 45, 0.9); --border: #30363d; --accent: #58a6ff; --accent2: #3fb950; --text: #e6edf3; --muted: #8b949e; --gold: #d29922; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  /* Ajuste para que el fondo no bloquee el scroll de tu tabla */
+  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; padding: 20px; min-height: 100vh; overflow-x: hidden; }
+  
+  /* Contenedor principal elevado para que quede sobre el fondo animado */
+  .container { position: relative; z-index: 10; max-width: 1100px; margin: 0 auto; backdrop-filter: blur(2px); }
+  
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 25px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .stat-value { font-size: 24px; font-weight: 800; margin-top: 5px; }
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 30px rgba(0,0,0,0.4); }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+  .field-group { display: flex; flex-direction: column; gap: 8px; }
+  label { font-size: 11px; color: var(--muted); text-transform: uppercase; font-family: 'Space Mono', monospace; }
+  input, select { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); font-size: 14px; outline: none; width: 100%; }
+  .btn-add { background: var(--accent2); color: #000; border: none; border-radius: 10px; padding: 16px; font-weight: 800; cursor: pointer; margin-top: 25px; width: 100%; text-transform: uppercase; transition: transform 0.2s; }
+  .btn-add:hover { transform: translateY(-2px); }
+  .btn-cierre { background: var(--gold); color: #000; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 700; cursor: pointer; font-size: 13px; z-index: 10;}
+  .btn-excel { background: #238636; color: white; border: none; border-radius: 8px; padding: 10px 15px; font-weight: 700; cursor: pointer; font-size: 12px; position: relative; z-index: 10;}
+  .table-container { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-top: 20px; box-shadow: 0 4px 30px rgba(0,0,0,0.4); }
+  table { width: 100%; border-collapse: collapse; min-width: 800px; }
+  th { background: rgba(33, 38, 45, 0.6); padding: 15px; font-size: 11px; color: var(--muted); text-align: left; }
+  td { padding: 15px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .badge-riesgo { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+  .r1 { background: rgba(63,185,80,0.2); color: #3fb950; }
+  .r2 { background: rgba(88,166,255,0.2); color: #58a6ff; }
+  .r3 { background: rgba(210,153,34,0.2); color: #d29922; }
+  .r4 { background: rgba(255,140,0,0.2); color: #ff8c00; }
+  .r5 { background: rgba(248,81,73,0.2); color: #f85149; }
+  .btn-del { background: none; border: none; color: #f78166; cursor: pointer; font-size: 18px; }
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 30px; width: 100%; max-width: 400px; }
+
+  /* --- ESTILOS DEL FONDO CRYPTO --- */
+  .grid { position: fixed; inset: 0; background-image: linear-gradient(rgba(0,255,170,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,170,0.04) 1px, transparent 1px); background-size: 60px 60px; z-index: 1; pointer-events: none; }
+  #particleCanvas { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+  .floating-logos { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
+  .logo-float { position: absolute; font-weight: 900; opacity: 0; animation: floatUp var(--dur) ease-in-out var(--delay) infinite; color: var(--color); text-shadow: 0 0 20px var(--color), 0 0 50px var(--color); font-size: var(--size); filter: blur(0.4px); font-family: monospace; }
+  @keyframes floatUp { 0% { opacity: 0; transform: translateY(0) scale(0.8) rotate(var(--rot)); } 15% { opacity: var(--maxop); } 85% { opacity: var(--maxop); } 100% { opacity: 0; transform: translateY(-130px) scale(1.15) rotate(calc(var(--rot) + 12deg)); } }
+  .scanline { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, rgba(0,255,170,0.5), transparent); z-index: 5; animation: scan 5s ease-in-out infinite; box-shadow: 0 0 14px rgba(0,255,170,0.3); pointer-events: none; }
+  @keyframes scan { 0% { top: 0%; opacity: 0; } 5% { opacity: 1; } 95% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+  .glow-center { position: fixed; inset: 0; z-index: 1; background: radial-gradient(ellipse at 50% 50%, rgba(0,255,170,0.04) 0%, transparent 70%); animation: pulse 4s ease-in-out infinite; pointer-events: none; }
+  @keyframes pulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
+  .corner { position: fixed; z-index: 8; pointer-events: none; }
+  .corner.tl { top: 12px; left: 12px; }
+  .corner.tr { top: 12px; right: 12px; transform: scaleX(-1); }
+  .corner.bl { bottom: 12px; left: 12px; transform: scaleY(-1); }
+  .corner.br { bottom: 12px; right: 12px; transform: scale(-1,-1); }
+</style>
+</head> 
+<body>
+
+<div class="grid"></div>
+<div class="glow-center"></div>
+<div class="scanline"></div>
+<canvas id="particleCanvas"></canvas>
+<div class="floating-logos" id="floatingLogos"></div>
+
+<div class="corner tl"><svg width="50" height="50" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.4)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="#00ffaa"/></svg></div>
+<div class="corner tr"><svg width="50" height="50" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.4)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="#00ffaa"/></svg></div>
+<div class="corner bl"><svg width="50" height="50" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.25)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="rgba(0,255,170,0.4)"/></svg></div>
+<div class="corner br"><svg width="50" height="50" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.25)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="rgba(0,255,170,0.4)"/></svg></div>
+
+<div class="container">
+  <header>
+    <h1>Planillas Negocio — <span>Cloud ☁️</span></h1>
+    <button class="btn-cierre" onclick="abrirCierre()">📊 Cierre Mensual</button>
+  </header>
+  
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Ganancia Histórica</div><div class="stat-value" id="statTotal">$0</div></div>
+    <div class="stat"><div class="stat-label">Ganancia Mes Actual</div><div class="stat-value" style="color:var(--gold)" id="statMes">$0</div></div>
+    <div class="stat"><div class="stat-label">Clientes Únicos</div><div class="stat-value" style="color:var(--accent)" id="statClientes">0</div></div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-grid">
+      <div class="field-group"><label>Fecha Registro</label><input type="date" id="fecha"></div>
+      <div class="field-group"><label>Mes Cotización</label><input type="month" id="mesCotizacion"></div>
+      <div class="field-group"><label>Cédula Cliente</label><input type="text" id="cedula" placeholder="12345..."></div>
+      <div class="field-group"><label>Nombre Completo</label><input type="text" id="nombre"></div>
+      <div class="field-group"><label>Celular</label><input type="text" id="celular"></div>
+      <div class="field-group"><label>Correo</label><input type="email" id="correo"></div>
+      <div class="field-group"><label>Riesgo ARL</label><select id="riesgo"><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></div>
+      <div class="field-group"><label>Ganancia ($)</label><input type="number" id="ganancia" value="50000"></div>
+    </div>
+    <button class="btn-add" onclick="addRegistro()">+ Guardar en Google Cloud</button>
+  </div>
+
+  <div style="margin-bottom:15px; display:flex; align-items:center; gap:10px; flex-wrap: wrap; position: relative; z-index: 10;">
+    <span style="font-size:12px; color:var(--muted)">FILTRAR REGISTROS:</span>
+    <select id="filtroMes" onchange="render()" style="max-width:180px; position: relative; z-index: 10; cursor: pointer;"></select>
+    <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Excel</button>
+  </div>
+
+  <div class="table-container">
+    <div id="tableWrapper"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg" onclick="this.style.display='none'">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2 style="margin-bottom:20px">📊 Cierre del Mes</h2>
+    <div id="modalContent"></div>
+    <button class="btn-add" onclick="document.getElementById('modalBg').style.display='none'">Cerrar</button>
+  </div>
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -26,8 +140,6 @@
   const colRef = collection(db, "planillas");
 
   let registros = [];
-  
-  // SOLUCIÓN COLORES:
   const riesgoClass = { I:'r1', II:'r2', III:'r3', IV:'r4', V:'r5', '1':'r1', '2':'r2', '3':'r3', '4':'r4', '5':'r5' };
 
   onSnapshot(query(colRef, orderBy("id", "desc")), (snapshot) => {
@@ -94,7 +206,6 @@
 
   function formatCOP(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
   
-  // SOLUCIÓN UNDEFINED:
   function getMesKey(f) { 
     if (!f || f === 'undefined') return 'Sin Fecha';
     return f.substring(0, 7); 
@@ -172,83 +283,96 @@
   };
 </script>
 
-<style>
-  :root { --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --border: #30363d; --accent: #58a6ff; --accent2: #3fb950; --text: #e6edf3; --muted: #8b949e; --gold: #d29922; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; padding: 20px; }
-  .container { max-width: 1100px; margin: 0 auto; }
-  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 25px; }
-  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-  .stat-value { font-size: 24px; font-weight: 800; margin-top: 5px; }
-  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; }
-  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-  .field-group { display: flex; flex-direction: column; gap: 8px; }
-  label { font-size: 11px; color: var(--muted); text-transform: uppercase; font-family: 'Space Mono', monospace; }
-  input, select { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); font-size: 14px; outline: none; width: 100%; }
-  .btn-add { background: var(--accent2); color: #000; border: none; border-radius: 10px; padding: 16px; font-weight: 800; cursor: pointer; margin-top: 25px; width: 100%; text-transform: uppercase; }
-  .btn-cierre { background: var(--gold); color: #000; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 700; cursor: pointer; font-size: 13px; }
-  .btn-excel { background: #238636; color: white; border: none; border-radius: 8px; padding: 10px 15px; font-weight: 700; cursor: pointer; font-size: 12px; }
-  .table-container { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-top: 20px; }
-  table { width: 100%; border-collapse: collapse; min-width: 800px; }
-  th { background: var(--surface2); padding: 15px; font-size: 11px; color: var(--muted); text-align: left; }
-  td { padding: 15px; font-size: 13px; border-bottom: 1px solid var(--border); }
-  .badge-riesgo { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; }
-  .r1 { background: rgba(63,185,80,0.2); color: #3fb950; }
-  .r2 { background: rgba(88,166,255,0.2); color: #58a6ff; }
-.r3 { background: rgba(210,153,34,0.2); color: #d29922; }
-.r4 { background: rgba(255,140,0,0.2); color: #ff8c00; }
-.r5 { background: rgba(248,81,73,0.2); color: #f85149; }
-  .btn-del { background: none; border: none; color: #f78166; cursor: pointer; font-size: 18px; }
-  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 30px; width: 100%; max-width: 400px; }
-</style>
-</head> 
-<body>
-<div class="container">
-  <header>
-    <h1>Planillas Negocio — <span>Cloud ☁️</span></h1>
-    <button class="btn-cierre" onclick="abrirCierre()">📊 Cierre Mensual</button>
-  </header>
-  
-  <div class="stats">
-    <div class="stat"><div class="stat-label">Ganancia Histórica</div><div class="stat-value" id="statTotal">$0</div></div>
-    <div class="stat"><div class="stat-label">Ganancia Mes Actual</div><div class="stat-value" style="color:var(--gold)" id="statMes">$0</div></div>
-    <div class="stat"><div class="stat-label">Clientes Únicos</div><div class="stat-value" style="color:var(--accent)" id="statClientes">0</div></div>
-  </div>
+<script>
+  const logoContainer = document.getElementById('floatingLogos');
+  const logoData = [
+    { text: '₿',  color: '#f7931a', maxop: 0.22 },
+    { text: 'Ξ',  color: '#627eea', maxop: 0.20 },
+    { text: '⬡',  color: '#f0b90b', maxop: 0.18 },
+    { text: '◎',  color: '#9945ff', maxop: 0.18 },
+    { text: '₳',  color: '#0033ad', maxop: 0.15 },
+    { text: '▲',  color: '#e84142', maxop: 0.15 },
+    { text: '✕',  color: '#00aae4', maxop: 0.15 },
+    { text: '●',  color: '#e6007a', maxop: 0.14 },
+    { text: '⬟',  color: '#8247e5', maxop: 0.14 },
+  ];
 
-  <div class="form-card">
-    <div class="form-grid">
-      <div class="field-group"><label>Fecha Registro</label><input type="date" id="fecha"></div>
-      <div class="field-group"><label>Mes Cotización</label><input type="month" id="mesCotizacion"></div>
-      <div class="field-group"><label>Cédula Cliente</label><input type="text" id="cedula" placeholder="12345..."></div>
-      <div class="field-group"><label>Nombre Completo</label><input type="text" id="nombre"></div>
-      <div class="field-group"><label>Celular</label><input type="text" id="celular"></div>
-      <div class="field-group"><label>Correo</label><input type="email" id="correo"></div>
-      <div class="field-group"><label>Riesgo ARL</label><select id="riesgo"><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></div>
-      <div class="field-group"><label>Ganancia ($)</label><input type="number" id="ganancia" value="50000"></div>
-    </div>
-    <button class="btn-add" onclick="addRegistro()">+ Guardar en Google Cloud</button>
-  </div>
+  for (let i = 0; i < 28; i++) {
+    const d = logoData[i % logoData.length];
+    const el = document.createElement('div');
+    el.className = 'logo-float';
+    el.textContent = d.text;
+    const size  = (Math.random() * 45 + 16) + 'px';
+    const left  = Math.random() * 95 + '%';
+    const top   = (20 + Math.random() * 65) + '%';
+    const dur   = (Math.random() * 9 + 7) + 's';
+    const delay = (Math.random() * 12) + 's';
+    const rot   = (Math.random() * 30 - 15) + 'deg';
+    el.style.cssText = `
+      left:${left}; top:${top};
+      --dur:${dur}; --delay:${delay};
+      --color:${d.color}; --size:${size};
+      --rot:${rot}; --maxop:${d.maxop};
+    `;
+    logoContainer.appendChild(el);
+  }
 
-  <div style="margin-bottom:15px; display:flex; align-items:center; gap:10px; flex-wrap: wrap;">
-    <span style="font-size:12px; color:var(--muted)">FILTRAR REGISTROS:</span>
-    <select id="filtroMes" onchange="render()" style="max-width:180px"></select>
-    <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Excel</button>
-  </div>
+  const pc = document.getElementById('particleCanvas');
+  const pctx = pc.getContext('2d');
+  pc.width  = window.innerWidth;
+  pc.height = window.innerHeight;
 
-  <div class="table-container">
-    <div id="tableWrapper"></div>
-  </div>
-</div>
+  const particles = Array.from({ length: 70 }, () => ({
+    x: Math.random() * pc.width,
+    y: Math.random() * pc.height,
+    r: Math.random() * 1.8 + 0.3,
+    vx: (Math.random() - 0.5) * 0.45,
+    vy: (Math.random() - 0.5) * 0.45,
+    alpha: Math.random() * 0.35 + 0.08,
+    color: ['#00ffaa','#448aff','#f7931a','#627eea','#9945ff'][Math.floor(Math.random()*5)],
+  }));
 
-<div class="modal-bg" id="modalBg" onclick="this.style.display='none'">
-  <div class="modal" onclick="event.stopPropagation()">
-    <h2 style="margin-bottom:20px">📊 Cierre del Mes</h2>
-    <div id="modalContent"></div>
-    <button class="btn-add" onclick="document.getElementById('modalBg').style.display='none'">Cerrar</button>
-  </div>
-</div>
+  function animParticles() {
+    pctx.clearRect(0, 0, pc.width, pc.height);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = pc.width;
+      if (p.x > pc.width) p.x = 0;
+      if (p.y < 0) p.y = pc.height;
+      if (p.y > pc.height) p.y = 0;
+      pctx.beginPath();
+      pctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      pctx.fillStyle = p.color;
+      pctx.globalAlpha = p.alpha;
+      pctx.fill();
+      pctx.globalAlpha = 1;
+    });
+
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 110) {
+          pctx.beginPath();
+          pctx.moveTo(particles[i].x, particles[i].y);
+          pctx.lineTo(particles[j].x, particles[j].y);
+          pctx.strokeStyle = particles[i].color;
+          pctx.globalAlpha = (1 - dist / 110) * 0.1;
+          pctx.lineWidth = 0.5;
+          pctx.stroke();
+          pctx.globalAlpha = 1;
+        }
+      }
+    }
+    requestAnimationFrame(animParticles);
+  }
+  animParticles();
+
+  window.addEventListener('resize', () => {
+    pc.width  = window.innerWidth;
+    pc.height = window.innerHeight;
+  });
+</script>
 </body>
 </html>
