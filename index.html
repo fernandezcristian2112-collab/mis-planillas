@@ -34,6 +34,7 @@
     render();
   });
 
+  // Autocompletado de clientes (¡Esta parte es genial para no repetir nombres!)
   document.getElementById('cedula').addEventListener('input', function(e) {
     const busqueda = e.target.value.trim();
     if (busqueda.length > 4) {
@@ -71,13 +72,10 @@
     if (confirm('¿Eliminar registro?')) await deleteDoc(doc(db, "planillas", docId));
   };
 
-  // FUNCIÓN PARA EXPORTAR A EXCEL
   window.exportarExcel = function() {
     const filter = document.getElementById('filtroMes').value;
     const filtrados = filter === 'todos' ? registros : registros.filter(r => r.fecha.substring(0, 7) === filter);
-    
     if (filtrados.length === 0) return alert("No hay datos para exportar");
-
     const dataExcel = filtrados.map(r => ({
       "Fecha Registro": r.fecha,
       "Mes Cotización": r.mesCotizacion,
@@ -87,7 +85,6 @@
       "Riesgo": r.riesgo,
       "Ganancia COP": r.ganancia
     }));
-
     const ws = XLSX.utils.json_to_sheet(dataExcel);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Planillas");
@@ -100,6 +97,7 @@
   window.render = function() {
     const filter = document.getElementById('filtroMes').value;
     const filtrados = filter === 'todos' ? registros : registros.filter(r => getMesKey(r.fecha) === filter);
+    
     const rows = filtrados.map(r => `
       <tr>
         <td>${r.fecha}</td>
@@ -109,37 +107,56 @@
         <td style="color:#3fb950; font-weight:700">${formatCOP(r.ganancia)}</td>
         <td><button class="btn-del" onclick="deleteRegistro('${r.docId}')">✕</button></td>
       </tr>`).join('');
+
     document.getElementById('tableWrapper').innerHTML = filtrados.length === 0 ? 
       '<p style="padding:40px; text-align:center; color:#8b949e;">Sin registros</p>' : 
       `<table><thead><tr><th>Registro</th><th>Mes Cotiz.</th><th>Cliente</th><th>Riesgo</th><th>Ganancia</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
-    updateStats();
+    
+    // Aquí pasamos el filtro a las estadísticas
+    updateStats(filter);
   };
 
-  function updateStats() {
-    const total = registros.reduce((s,r) => s + r.ganancia, 0);
+  // MEJORA: Estadísticas dinámicas según el mes seleccionado
+  function updateStats(filter) {
+    const totalHistorico = registros.reduce((s,r) => s + r.ganancia, 0);
     const hoy = new Date().toISOString().substring(0,7);
-    const mes = registros.filter(r => getMesKey(r.fecha) === hoy);
-    document.getElementById('statTotal').textContent = formatCOP(total);
-    document.getElementById('statMes').textContent = formatCOP(mes.reduce((s,r) => s + r.ganancia, 0));
+    
+    // Si el usuario elige un mes, mostramos ese. Si elige "todos", mostramos el mes actual por defecto.
+    const mesABuscar = (filter === 'todos') ? hoy : filter;
+    const registrosDelMes = registros.filter(r => getMesKey(r.fecha) === mesABuscar);
+    const gananciaMes = registrosDelMes.reduce((s,r) => s + r.ganancia, 0);
+
+    document.getElementById('statTotal').textContent = formatCOP(totalHistorico);
+    document.getElementById('statMes').textContent = formatCOP(gananciaMes);
+    
+    // Actualizamos el nombre de la tarjeta para que sepas qué estás viendo
+    const labelMes = document.querySelector('.stat:nth-child(2) .stat-label');
+    labelMes.textContent = (filter === 'todos') ? `Ganancia Mes Actual (${hoy})` : `Ganancia de ${filter}`;
+    
     document.getElementById('statClientes').textContent = new Set(registros.map(r => r.cedula)).size;
   }
 
   function poblarFiltroMes() {
     const sel = document.getElementById('filtroMes');
-    const actual = sel.value;
+    const actual = sel.value || 'todos';
     const meses = [...new Set(registros.map(r => getMesKey(r.fecha)))].sort().reverse();
     sel.innerHTML = '<option value="todos">Todos los meses</option>' + 
       meses.map(m => `<option value="${m}" ${m===actual?'selected':''}>${m}</option>`).join('');
   }
 
+  // MEJORA: El cierre mensual ahora también respeta el filtro
   window.abrirCierre = function() {
+    const filter = document.getElementById('filtroMes').value;
     const hoy = new Date().toISOString().substring(0,7);
-    const delMes = registros.filter(r => getMesKey(r.fecha) === hoy);
+    const mesABuscar = (filter === 'todos') ? hoy : filter;
+    
+    const delMes = registros.filter(r => getMesKey(r.fecha) === mesABuscar);
     const total = delMes.reduce((s,r) => s + r.ganancia, 0);
+    
     document.getElementById('modalContent').innerHTML = `
-      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #30363d"><span>Mes:</span><b>${hoy}</b></div>
-      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #30363d"><span>Trámites:</span><b>${delMes.length}</b></div>
-      <div style="display:flex; justify-content:space-between; padding:15px 0; color:#3fb950; font-size:20px"><span>TOTAL:</span><b>${formatCOP(total)}</b></div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #30363d"><span>Periodo:</span><b>${mesABuscar}</b></div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #30363d"><span>Total Trámites:</span><b>${delMes.length}</b></div>
+      <div style="display:flex; justify-content:space-between; padding:15px 0; color:#3fb950; font-size:20px"><span>GANANCIA:</span><b>${formatCOP(total)}</b></div>
     `;
     document.getElementById('modalBg').style.display = 'flex';
   };
