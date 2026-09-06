@@ -3,95 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Planillas SS — Cloud Pro</title>
+<title>e-Trámites — Dashboard Pro</title>
 
 <!-- CONFIGURACIÓN PWA Y WEB APP -->
-<meta name="theme-color" content="#040a12">
+<meta name="theme-color" content="#090d16">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="e-Trámites">
-<link rel="manifest" href="data:application/manifest+json;utf8,{%22name%22:%22e-Tr%C3%A1mites%20Planillas%22,%22short_name%22:%22e-Tr%C3%A1mites%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23040a12%22,%22theme_color%22:%22%23040a12%22,%22icons%22:[{%22src%22:%22https://cdn-icons-png.flaticon.com/512/3135/3135706.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+<link rel="manifest" href="data:application/manifest+json;utf8,{%22name%22:%22e-Tr%C3%A1mites%20Planillas%22,%22short_name%22:%22e-Tr%C3%A1mites%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23090d16%22,%22theme_color%22:%22%23090d16%22,%22icons%22:[{%22src%22:%22https://cdn-icons-png.flaticon.com/512/3135/3135706.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
 
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-  :root { --bg: #040a12; --surface: rgba(22, 27, 34, 0.85); --surface2: rgba(33, 38, 45, 0.9); --border: #30363d; --accent: #58a6ff; --accent2: #3fb950; --text: #e6edf3; --muted: #8b949e; --gold: #d29922; }
+  :root { 
+    --bg: #090d16; 
+    --surface: #111827; 
+    --surface-hover: #1f293d; 
+    --border: rgba(255, 255, 255, 0.08); 
+    --accent: #10b981; 
+    --accent-glow: rgba(16, 185, 129, 0.15);
+    --blue: #3b82f6; 
+    --gold: #f59e0b; 
+    --text: #f3f4f6; 
+    --muted: #9ca3af; 
+  }
+
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   
-  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; padding: 15px; min-height: 100vh; overflow-x: hidden; user-select: none; }
+  body { 
+    background: var(--bg); 
+    color: var(--text); 
+    font-family: 'Plus Jakarta Sans', sans-serif; 
+    padding: 16px; 
+    min-height: 100vh; 
+    overflow-x: hidden;
+  }
   
-  .container { position: relative; z-index: 10; max-width: 1100px; margin: 0 auto; backdrop-filter: blur(2px); }
+  .container { max-width: 1050px; margin: 0 auto; }
   
-  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-  .stat-value { font-size: 22px; font-weight: 800; margin-top: 5px; }
-  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(0,0,0,0.4); }
-  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-  .field-group { display: flex; flex-direction: column; gap: 6px; }
-  label { font-size: 10px; color: var(--muted); text-transform: uppercase; font-family: 'Space Mono', monospace; }
-  input, select { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); font-size: 14px; outline: none; width: 100%; }
-  .btn-add { background: var(--accent2); color: #000; border: none; border-radius: 10px; padding: 16px; font-weight: 800; cursor: pointer; margin-top: 20px; width: 100%; text-transform: uppercase; transition: transform 0.2s; }
-  .btn-add:active { transform: scale(0.98); }
-  .btn-cierre { background: var(--gold); color: #000; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 700; cursor: pointer; font-size: 12px; z-index: 10;}
-  .btn-excel { background: #238636; color: white; border: none; border-radius: 8px; padding: 10px 15px; font-weight: 700; cursor: pointer; font-size: 12px; position: relative; z-index: 10;}
-  .table-container { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-top: 15px; box-shadow: 0 4px 30px rgba(0,0,0,0.4); }
-  table { width: 100%; border-collapse: collapse; min-width: 750px; }
-  th { background: rgba(33, 38, 45, 0.6); padding: 12px; font-size: 10px; color: var(--muted); text-align: left; }
-  td { padding: 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
-  .badge-riesgo { padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; }
-  .r1 { background: rgba(63,185,80,0.2); color: #3fb950; }
-  .r2 { background: rgba(88,166,255,0.2); color: #58a6ff; }
-  .r3 { background: rgba(210,153,34,0.2); color: #d29922; }
-  .r4 { background: rgba(255,140,0,0.2); color: #ff8c00; }
-  .r5 { background: rgba(248,81,73,0.2); color: #f85149; }
-  .btn-del { background: none; border: none; color: #f78166; cursor: pointer; font-size: 18px; }
-  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 25px; width: 90%; max-width: 400px; }
+  header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 24px; 
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
 
-  /* --- FONDO CRYPTO --- */
-  .grid { position: fixed; inset: 0; background-image: linear-gradient(rgba(0,255,170,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,170,0.04) 1px, transparent 1px); background-size: 60px 60px; z-index: 1; pointer-events: none; }
-  #particleCanvas { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
-  .floating-logos { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
-  .logo-float { position: absolute; font-weight: 900; opacity: 0; animation: floatUp var(--dur) ease-in-out var(--delay) infinite; color: var(--color); text-shadow: 0 0 20px var(--color), 0 0 50px var(--color); font-size: var(--size); filter: blur(0.4px); font-family: monospace; }
-  @keyframes floatUp { 0% { opacity: 0; transform: translateY(0) scale(0.8) rotate(var(--rot)); } 15% { opacity: var(--maxop); } 85% { opacity: var(--maxop); } 100% { opacity: 0; transform: translateY(-130px) scale(1.15) rotate(calc(var(--rot) + 12deg)); } }
-  .scanline { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, rgba(0,255,170,0.5), transparent); z-index: 5; animation: scan 5s ease-in-out infinite; box-shadow: 0 0 14px rgba(0,255,170,0.3); pointer-events: none; }
-  @keyframes scan { 0% { top: 0%; opacity: 0; } 5% { opacity: 1; } 95% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-  .glow-center { position: fixed; inset: 0; z-index: 1; background: radial-gradient(ellipse at 50% 50%, rgba(0,255,170,0.04) 0%, transparent 70%); animation: pulse 4s ease-in-out infinite; pointer-events: none; }
-  @keyframes pulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
-  .corner { position: fixed; z-index: 8; pointer-events: none; }
-  .corner.tl { top: 12px; left: 12px; }
-  .corner.tr { top: 12px; right: 12px; transform: scaleX(-1); }
-  .corner.bl { bottom: 12px; left: 12px; transform: scaleY(-1); }
-  .corner.br { bottom: 12px; right: 12px; transform: scale(-1,-1); }
+  h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.5px; }
+  h1 span { color: var(--accent); }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .stat { 
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: 16px; 
+    padding: 18px; 
+    position: relative;
+    overflow: hidden;
+  }
+  .stat::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--stat-color, var(--accent)), transparent);
+  }
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 24px; font-weight: 800; margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+
+  .form-card { 
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: 20px; 
+    padding: 22px; 
+    margin-bottom: 24px; 
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+  }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+  input, select { 
+    background: #182234; 
+    border: 1px solid var(--border); 
+    border-radius: 12px; 
+    padding: 12px 14px; 
+    color: var(--text); 
+    font-size: 14px; 
+    outline: none; 
+    transition: all 0.2s;
+  }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+  .btn-add { 
+    background: var(--accent); 
+    color: #000; 
+    border: none; 
+    border-radius: 12px; 
+    padding: 16px; 
+    font-weight: 700; 
+    font-size: 14px;
+    cursor: pointer; 
+    margin-top: 20px; 
+    width: 100%; 
+    transition: all 0.2s;
+  }
+  .btn-add:active { transform: scale(0.99); opacity: 0.9; }
+
+  .btn-cierre { 
+    background: #202b3d; 
+    color: var(--text); 
+    border: 1px solid var(--border); 
+    border-radius: 10px; 
+    padding: 10px 16px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    font-size: 12px;
+  }
+  .btn-excel { 
+    background: #064e3b; 
+    color: #34d399; 
+    border: 1px solid rgba(52, 211, 153, 0.2); 
+    border-radius: 10px; 
+    padding: 10px 14px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    font-size: 12px;
+  }
+
+  .table-container { 
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: 20px; 
+    overflow-x: auto; 
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 700px; }
+  th { background: #162032; padding: 14px 16px; font-size: 11px; color: var(--muted); text-align: left; font-weight: 600; text-transform: uppercase; }
+  td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+
+  .badge-riesgo { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .r1 { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+  .r2 { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+  .r3 { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+  .r4 { background: rgba(249, 115, 22, 0.15); color: #fb923c; }
+  .r5 { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+  .btn-del { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 16px; opacity: 0.7; }
+  .btn-del:hover { opacity: 1; }
+
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(8px); }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; width: 90%; max-width: 400px; }
 </style>
 </head> 
 <body>
 
-<div class="grid"></div>
-<div class="glow-center"></div>
-<div class="scanline"></div>
-<canvas id="particleCanvas"></canvas>
-<div class="floating-logos" id="floatingLogos"></div>
-
-<div class="corner tl"><svg width="40" height="40" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.4)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="#00ffaa"/></svg></div>
-<div class="corner tr"><svg width="40" height="40" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.4)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="#00ffaa"/></svg></div>
-<div class="corner bl"><svg width="40" height="40" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.25)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="rgba(0,255,170,0.4)"/></svg></div>
-<div class="corner br"><svg width="40" height="40" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.25)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="rgba(0,255,170,0.4)"/></svg></div>
-
 <div class="container">
   <header>
-    <h1 style="font-size: 1.4rem;">Planillas SS — <span>Cloud ☁️</span></h1>
+    <h1>e-Trámites <span>.Control</span></h1>
     <button class="btn-cierre" onclick="abrirCierre()">📊 Cierre Mensual</button>
   </header>
   
   <div class="stats">
-    <div class="stat"><div class="stat-label">Ganancia Histórica</div><div class="stat-value" id="statTotal">$0</div></div>
-    <div class="stat"><div class="stat-label">Ganancia Mes Actual</div><div class="stat-value" style="color:var(--gold)" id="statMes">$0</div></div>
-    <div class="stat"><div class="stat-label">Clientes Únicos</div><div class="stat-value" style="color:var(--accent)" id="statClientes">0</div></div>
+    <div class="stat" style="--stat-color: var(--blue)"><div class="stat-label">Ganancia Histórica</div><div class="stat-value" id="statTotal">$0</div></div>
+    <div class="stat" style="--stat-color: var(--gold)"><div class="stat-label">Ganancia Mes Actual</div><div class="stat-value" style="color:var(--gold)" id="statMes">$0</div></div>
+    <div class="stat" style="--stat-color: var(--accent)"><div class="stat-label">Clientes Registrados</div><div class="stat-value" style="color:var(--accent)" id="statClientes">0</div></div>
   </div>
 
   <div class="form-card">
@@ -105,14 +183,13 @@
       <div class="field-group"><label>Riesgo ARL</label><select id="riesgo"><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></div>
       <div class="field-group"><label>Ganancia ($)</label><input type="number" id="ganancia" value="50000"></div>
     </div>
-    <button class="btn-add" onclick="addRegistro()">+ Guardar en Google Cloud</button>
+    <button class="btn-add" onclick="addRegistro()">+ Registrar Ganancia</button>
   </div>
 
-  <div style="margin-bottom:15px; display:flex; align-items:center; gap:10px; flex-wrap: wrap; position: relative; z-index: 10;">
-    <span style="font-size:11px; color:var(--muted)">FILTRAR REGISTROS:</span>
-    <select id="filtroMes" onchange="render()" style="max-width:160px; position: relative; z-index: 10; cursor: pointer;"></select>
-    <input type="text" id="buscarCliente" placeholder="🔍 Buscar cliente / CC..." oninput="render()" style="max-width:200px; padding:10px 12px; font-size:13px;">
-    <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Excel</button>
+  <div style="margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap: wrap;">
+    <select id="filtroMes" onchange="render()" style="max-width:160px;"></select>
+    <input type="text" id="buscarCliente" placeholder="🔍 Buscar cliente..." oninput="render()" style="max-width:200px;">
+    <button class="btn-excel" onclick="exportarExcel()">📥 Exportar Excel</button>
   </div>
 
   <div class="table-container">
@@ -122,9 +199,9 @@
 
 <div class="modal-bg" id="modalBg" onclick="this.style.display='none'">
   <div class="modal" onclick="event.stopPropagation()">
-    <h2 style="margin-bottom:15px; font-size:1.3rem;">📊 Cierre del Mes</h2>
+    <h2 style="margin-bottom:16px; font-size:1.2rem;">📊 Resumen de Cierre</h2>
     <div id="modalContent"></div>
-    <button class="btn-add" onclick="document.getElementById('modalBg').style.display='none'">Cerrar</button>
+    <button class="btn-add" style="margin-top:20px" onclick="document.getElementById('modalBg').style.display='none'">Cerrar</button>
   </div>
 </div>
 
@@ -163,7 +240,7 @@
         document.getElementById('nombre').value = cliente.nombre;
         document.getElementById('celular').value = cliente.celular;
         document.getElementById('correo').value = cliente.correo || '';
-        e.target.style.borderColor = '#3fb950';
+        e.target.style.borderColor = '#10b981';
       }
     }
   });
@@ -236,22 +313,22 @@
 
       return `
       <tr>
-        <td>${(!r.fecha || r.fecha === 'undefined') ? '—' : r.fecha}</td>
-        <td style="color:#d29922">${r.mesCotizacion || '—'}</td>
+        <td style="color:var(--muted); font-size:12px">${(!r.fecha || r.fecha === 'undefined') ? '—' : r.fecha}</td>
+        <td style="color:var(--gold); font-weight:600">${r.mesCotizacion || '—'}</td>
         <td>
-          <b>${r.nombre}</b>
-          ${r.celular ? `<a href="${waUrl}" target="_blank" title="Enviar WhatsApp" style="margin-left:8px; text-decoration:none; font-size:15px;">🟢</a>` : ''}
-          <br><small>CC: ${r.cedula}</small>
+          <b style="font-size:14px">${r.nombre}</b>
+          ${r.celular ? `<a href="${waUrl}" target="_blank" title="Enviar WhatsApp" style="margin-left:6px; text-decoration:none;">💬</a>` : ''}
+          <br><span style="color:var(--muted); font-size:11px">CC: ${r.cedula}</span>
         </td>
         <td><span class="badge-riesgo ${claseRiesgo}">Riesgo ${riesgoLimpio}</span></td>
-        <td style="color:#3fb950; font-weight:700">${formatCOP(r.ganancia)}</td>
+        <td style="color:var(--accent); font-weight:700; font-family:'JetBrains Mono', monospace">${formatCOP(r.ganancia)}</td>
         <td><button class="btn-del" onclick="deleteRegistro('${r.docId}')">✕</button></td>
       </tr>`
     }).join('');
 
     document.getElementById('tableWrapper').innerHTML = filtrados.length === 0 ? 
-      '<p style="padding:40px; text-align:center; color:#8b949e;">Sin registros encontrados</p>' : 
-      `<table><thead><tr><th>Registro</th><th>Mes Cotiz.</th><th>Cliente</th><th>Riesgo</th><th>Ganancia</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+      '<p style="padding:40px; text-align:center; color:var(--muted);">Sin registros encontrados</p>' : 
+      `<table><thead><tr><th>Fecha</th><th>Cotización</th><th>Cliente</th><th>Riesgo</th><th>Ganancia</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
     
     updateStats(filter);
   };
@@ -290,9 +367,9 @@
     const total = delMes.reduce((s,r) => s + r.ganancia, 0);
     
     document.getElementById('modalContent').innerHTML = `
-      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #30363d"><span>Periodo:</span><b>${mesABuscar}</b></div>
-      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #30363d"><span>Total Trámites:</span><b>${delMes.length}</b></div>
-      <div style="display:flex; justify-content:space-between; padding:15px 0; color:#3fb950; font-size:20px"><span>GANANCIA:</span><b>${formatCOP(total)}</b></div>
+      <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); font-size:14px"><span>Periodo:</span><b>${mesABuscar}</b></div>
+      <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); font-size:14px"><span>Total Trámites:</span><b>${delMes.length}</b></div>
+      <div style="display:flex; justify-content:space-between; padding:16px 0; color:var(--accent); font-size:22px; font-weight:800; font-family:'JetBrains Mono', monospace"><span>GANANCIA:</span><b>${formatCOP(total)}</b></div>
     `;
     document.getElementById('modalBg').style.display = 'flex';
   };
@@ -301,98 +378,6 @@
     document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
     document.getElementById('mesCotizacion').value = new Date().toISOString().substring(0, 7);
   };
-</script>
-
-<script>
-  const logoContainer = document.getElementById('floatingLogos');
-  const logoData = [
-    { text: '₿',  color: '#f7931a', maxop: 0.22 },
-    { text: 'Ξ',  color: '#627eea', maxop: 0.20 },
-    { text: '⬡',  color: '#f0b90b', maxop: 0.18 },
-    { text: '◎',  color: '#9945ff', maxop: 0.18 },
-    { text: '₳',  color: '#0033ad', maxop: 0.15 },
-    { text: '▲',  color: '#e84142', maxop: 0.15 },
-    { text: '✕',  color: '#00aae4', maxop: 0.15 },
-    { text: '●',  color: '#e6007a', maxop: 0.14 },
-    { text: '⬟',  color: '#8247e5', maxop: 0.14 },
-  ];
-
-  for (let i = 0; i < 28; i++) {
-    const d = logoData[i % logoData.length];
-    const el = document.createElement('div');
-    el.className = 'logo-float';
-    el.textContent = d.text;
-    const size  = (Math.random() * 45 + 16) + 'px';
-    const left  = Math.random() * 95 + '%';
-    const top   = (20 + Math.random() * 65) + '%';
-    const dur   = (Math.random() * 9 + 7) + 's';
-    const delay = (Math.random() * 12) + 's';
-    const rot   = (Math.random() * 30 - 15) + 'deg';
-    el.style.cssText = `
-      left:${left}; top:${top};
-      --dur:${dur}; --delay:${delay};
-      --color:${d.color}; --size:${size};
-      --rot:${rot}; --maxop:${d.maxop};
-    `;
-    logoContainer.appendChild(el);
-  }
-
-  const pc = document.getElementById('particleCanvas');
-  const pctx = pc.getContext('2d');
-  pc.width  = window.innerWidth;
-  pc.height = window.innerHeight;
-
-  const particles = Array.from({ length: 70 }, () => ({
-    x: Math.random() * pc.width,
-    y: Math.random() * pc.height,
-    r: Math.random() * 1.8 + 0.3,
-    vx: (Math.random() - 0.5) * 0.45,
-    vy: (Math.random() - 0.5) * 0.45,
-    alpha: Math.random() * 0.35 + 0.08,
-    color: ['#00ffaa','#448aff','#f7931a','#627eea','#9945ff'][Math.floor(Math.random()*5)],
-  }));
-
-  function animParticles() {
-    pctx.clearRect(0, 0, pc.width, pc.height);
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0) p.x = pc.width;
-      if (p.x > pc.width) p.x = 0;
-      if (p.y < 0) p.y = pc.height;
-      if (p.y > pc.height) p.y = 0;
-      pctx.beginPath();
-      pctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      pctx.fillStyle = p.color;
-      pctx.globalAlpha = p.alpha;
-      pctx.fill();
-      pctx.globalAlpha = 1;
-    });
-
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist < 110) {
-          pctx.beginPath();
-          pctx.moveTo(particles[i].x, particles[i].y);
-          pctx.lineTo(particles[j].x, particles[j].y);
-          pctx.strokeStyle = particles[i].color;
-          pctx.globalAlpha = (1 - dist / 110) * 0.1;
-          pctx.lineWidth = 0.5;
-          pctx.stroke();
-          pctx.globalAlpha = 1;
-        }
-      }
-    }
-    requestAnimationFrame(animParticles);
-  }
-  animParticles();
-
-  window.addEventListener('resize', () => {
-    pc.width  = window.innerWidth;
-    pc.height = window.innerHeight;
-  });
 </script>
 </body>
 </html>
