@@ -2,38 +2,47 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Planillas SS — Cloud Pro</title>
+
+<!-- CONFIGURACIÓN PWA Y WEB APP -->
+<meta name="theme-color" content="#040a12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="e-Trámites">
+<link rel="manifest" href="data:application/manifest+json;utf8,{%22name%22:%22e-Tr%C3%A1mites%20Planillas%22,%22short_name%22:%22e-Tr%C3%A1mites%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23040a12%22,%22theme_color%22:%22%23040a12%22,%22icons%22:[{%22src%22:%22https://cdn-icons-png.flaticon.com/512/3135/3135706.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
   :root { --bg: #040a12; --surface: rgba(22, 27, 34, 0.85); --surface2: rgba(33, 38, 45, 0.9); --border: #30363d; --accent: #58a6ff; --accent2: #3fb950; --text: #e6edf3; --muted: #8b949e; --gold: #d29922; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   
-  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; padding: 20px; min-height: 100vh; overflow-x: hidden; }
+  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; padding: 15px; min-height: 100vh; overflow-x: hidden; user-select: none; }
   
   .container { position: relative; z-index: 10; max-width: 1100px; margin: 0 auto; backdrop-filter: blur(2px); }
   
-  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 25px; }
-  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
   .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-  .stat-value { font-size: 24px; font-weight: 800; margin-top: 5px; }
-  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 30px rgba(0,0,0,0.4); }
-  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-  .field-group { display: flex; flex-direction: column; gap: 8px; }
-  label { font-size: 11px; color: var(--muted); text-transform: uppercase; font-family: 'Space Mono', monospace; }
+  .stat-value { font-size: 22px; font-weight: 800; margin-top: 5px; }
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(0,0,0,0.4); }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  label { font-size: 10px; color: var(--muted); text-transform: uppercase; font-family: 'Space Mono', monospace; }
   input, select { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); font-size: 14px; outline: none; width: 100%; }
-  .btn-add { background: var(--accent2); color: #000; border: none; border-radius: 10px; padding: 16px; font-weight: 800; cursor: pointer; margin-top: 25px; width: 100%; text-transform: uppercase; transition: transform 0.2s; }
-  .btn-add:hover { transform: translateY(-2px); }
-  .btn-cierre { background: var(--gold); color: #000; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 700; cursor: pointer; font-size: 13px; z-index: 10;}
+  .btn-add { background: var(--accent2); color: #000; border: none; border-radius: 10px; padding: 16px; font-weight: 800; cursor: pointer; margin-top: 20px; width: 100%; text-transform: uppercase; transition: transform 0.2s; }
+  .btn-add:active { transform: scale(0.98); }
+  .btn-cierre { background: var(--gold); color: #000; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 700; cursor: pointer; font-size: 12px; z-index: 10;}
   .btn-excel { background: #238636; color: white; border: none; border-radius: 8px; padding: 10px 15px; font-weight: 700; cursor: pointer; font-size: 12px; position: relative; z-index: 10;}
-  .table-container { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-top: 20px; box-shadow: 0 4px 30px rgba(0,0,0,0.4); }
-  table { width: 100%; border-collapse: collapse; min-width: 800px; }
-  th { background: rgba(33, 38, 45, 0.6); padding: 15px; font-size: 11px; color: var(--muted); text-align: left; }
-  td { padding: 15px; font-size: 13px; border-bottom: 1px solid var(--border); }
-  .badge-riesgo { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+  .table-container { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-top: 15px; box-shadow: 0 4px 30px rgba(0,0,0,0.4); }
+  table { width: 100%; border-collapse: collapse; min-width: 750px; }
+  th { background: rgba(33, 38, 45, 0.6); padding: 12px; font-size: 10px; color: var(--muted); text-align: left; }
+  td { padding: 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .badge-riesgo { padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; }
   .r1 { background: rgba(63,185,80,0.2); color: #3fb950; }
   .r2 { background: rgba(88,166,255,0.2); color: #58a6ff; }
   .r3 { background: rgba(210,153,34,0.2); color: #d29922; }
@@ -41,7 +50,7 @@
   .r5 { background: rgba(248,81,73,0.2); color: #f85149; }
   .btn-del { background: none; border: none; color: #f78166; cursor: pointer; font-size: 18px; }
   .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 30px; width: 100%; max-width: 400px; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 25px; width: 90%; max-width: 400px; }
 
   /* --- FONDO CRYPTO --- */
   .grid { position: fixed; inset: 0; background-image: linear-gradient(rgba(0,255,170,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,170,0.04) 1px, transparent 1px); background-size: 60px 60px; z-index: 1; pointer-events: none; }
@@ -68,14 +77,14 @@
 <canvas id="particleCanvas"></canvas>
 <div class="floating-logos" id="floatingLogos"></div>
 
-<div class="corner tl"><svg width="50" height="50" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.4)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="#00ffaa"/></svg></div>
-<div class="corner tr"><svg width="50" height="50" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.4)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="#00ffaa"/></svg></div>
-<div class="corner bl"><svg width="50" height="50" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.25)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="rgba(0,255,170,0.4)"/></svg></div>
-<div class="corner br"><svg width="50" height="50" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.25)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="rgba(0,255,170,0.4)"/></svg></div>
+<div class="corner tl"><svg width="40" height="40" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.4)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="#00ffaa"/></svg></div>
+<div class="corner tr"><svg width="40" height="40" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.4)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="#00ffaa"/></svg></div>
+<div class="corner bl"><svg width="40" height="40" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.25)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="rgba(0,255,170,0.4)"/></svg></div>
+<div class="corner br"><svg width="40" height="40" viewBox="0 0 50 50" fill="none"><path d="M0 50 L0 0 L50 0" stroke="rgba(0,255,170,0.25)" stroke-width="1.5" fill="none"/><circle cx="2" cy="2" r="2.5" fill="rgba(0,255,170,0.4)"/></svg></div>
 
 <div class="container">
   <header>
-    <h1>Planillas Negocio — <span>Cloud ☁️</span></h1>
+    <h1 style="font-size: 1.4rem;">Planillas SS — <span>Cloud ☁️</span></h1>
     <button class="btn-cierre" onclick="abrirCierre()">📊 Cierre Mensual</button>
   </header>
   
@@ -100,9 +109,9 @@
   </div>
 
   <div style="margin-bottom:15px; display:flex; align-items:center; gap:10px; flex-wrap: wrap; position: relative; z-index: 10;">
-    <span style="font-size:12px; color:var(--muted)">FILTRAR REGISTROS:</span>
-    <select id="filtroMes" onchange="render()" style="max-width:180px; position: relative; z-index: 10; cursor: pointer;"></select>
-    <input type="text" id="buscarCliente" placeholder="🔍 Buscar cliente / CC..." oninput="render()" style="max-width:220px; padding:10px 12px; font-size:13px;">
+    <span style="font-size:11px; color:var(--muted)">FILTRAR REGISTROS:</span>
+    <select id="filtroMes" onchange="render()" style="max-width:160px; position: relative; z-index: 10; cursor: pointer;"></select>
+    <input type="text" id="buscarCliente" placeholder="🔍 Buscar cliente / CC..." oninput="render()" style="max-width:200px; padding:10px 12px; font-size:13px;">
     <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Excel</button>
   </div>
 
@@ -113,7 +122,7 @@
 
 <div class="modal-bg" id="modalBg" onclick="this.style.display='none'">
   <div class="modal" onclick="event.stopPropagation()">
-    <h2 style="margin-bottom:20px">📊 Cierre del Mes</h2>
+    <h2 style="margin-bottom:15px; font-size:1.3rem;">📊 Cierre del Mes</h2>
     <div id="modalContent"></div>
     <button class="btn-add" onclick="document.getElementById('modalBg').style.display='none'">Cerrar</button>
   </div>
