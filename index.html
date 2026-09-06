@@ -8,14 +8,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-  /* --- ESTILOS ORIGINALES DE TU APP --- */
   :root { --bg: #040a12; --surface: rgba(22, 27, 34, 0.85); --surface2: rgba(33, 38, 45, 0.9); --border: #30363d; --accent: #58a6ff; --accent2: #3fb950; --text: #e6edf3; --muted: #8b949e; --gold: #d29922; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   
-  /* Ajuste para que el fondo no bloquee el scroll de tu tabla */
   body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; padding: 20px; min-height: 100vh; overflow-x: hidden; }
   
-  /* Contenedor principal elevado para que quede sobre el fondo animado */
   .container { position: relative; z-index: 10; max-width: 1100px; margin: 0 auto; backdrop-filter: blur(2px); }
   
   header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
@@ -46,7 +43,7 @@
   .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
   .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 30px; width: 100%; max-width: 400px; }
 
-  /* --- ESTILOS DEL FONDO CRYPTO --- */
+  /* --- FONDO CRYPTO --- */
   .grid { position: fixed; inset: 0; background-image: linear-gradient(rgba(0,255,170,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,170,0.04) 1px, transparent 1px); background-size: 60px 60px; z-index: 1; pointer-events: none; }
   #particleCanvas { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
   .floating-logos { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
@@ -92,9 +89,9 @@
     <div class="form-grid">
       <div class="field-group"><label>Fecha Registro</label><input type="date" id="fecha"></div>
       <div class="field-group"><label>Mes Cotización</label><input type="month" id="mesCotizacion"></div>
-      <div class="field-group"><label>Cédula Cliente</label><input type="text" id="cedula" placeholder="12345..."></div>
+      <div class="field-group"><label>Cédula Cliente</label><input type="tel" id="cedula" inputmode="numeric" placeholder="12345..."></div>
       <div class="field-group"><label>Nombre Completo</label><input type="text" id="nombre"></div>
-      <div class="field-group"><label>Celular</label><input type="text" id="celular"></div>
+      <div class="field-group"><label>Celular</label><input type="tel" id="celular" inputmode="tel" placeholder="3001234567"></div>
       <div class="field-group"><label>Correo</label><input type="email" id="correo"></div>
       <div class="field-group"><label>Riesgo ARL</label><select id="riesgo"><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></div>
       <div class="field-group"><label>Ganancia ($)</label><input type="number" id="ganancia" value="50000"></div>
@@ -105,6 +102,7 @@
   <div style="margin-bottom:15px; display:flex; align-items:center; gap:10px; flex-wrap: wrap; position: relative; z-index: 10;">
     <span style="font-size:12px; color:var(--muted)">FILTRAR REGISTROS:</span>
     <select id="filtroMes" onchange="render()" style="max-width:180px; position: relative; z-index: 10; cursor: pointer;"></select>
+    <input type="text" id="buscarCliente" placeholder="🔍 Buscar cliente / CC..." oninput="render()" style="max-width:220px; padding:10px 12px; font-size:13px;">
     <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Excel</button>
   </div>
 
@@ -213,16 +211,29 @@
 
   window.render = function() {
     const filter = document.getElementById('filtroMes').value;
-    const filtrados = filter === 'todos' ? registros : registros.filter(r => getMesKey(r.fecha) === filter);
-    
+    const queryTexto = (document.getElementById('buscarCliente')?.value || '').toLowerCase().trim();
+
+    const filtrados = registros.filter(r => {
+      const matchMes = filter === 'todos' ? true : getMesKey(r.fecha) === filter;
+      const matchQuery = (r.nombre || '').toLowerCase().includes(queryTexto) || (r.cedula || '').includes(queryTexto);
+      return matchMes && matchQuery;
+    });
+
     const rows = filtrados.map(r => {
       const riesgoLimpio = r.riesgo ? r.riesgo.trim() : 'I';
-      const claseRiesgo = riesgoClass[riesgoLimpio] || 'r1'; 
+      const claseRiesgo = riesgoClass[riesgoLimpio] || 'r1';
+      const waText = encodeURIComponent(`Hola ${r.nombre}, confirmamos la planilla de SS correspondiente al mes de ${r.mesCotizacion}. ¡Gracias por elegir e-Trámites!`);
+      const waUrl = r.celular ? `https://wa.me/57${r.celular}?text=${waText}` : '#';
+
       return `
       <tr>
         <td>${(!r.fecha || r.fecha === 'undefined') ? '—' : r.fecha}</td>
         <td style="color:#d29922">${r.mesCotizacion || '—'}</td>
-        <td><b>${r.nombre}</b><br><small>CC: ${r.cedula}</small></td>
+        <td>
+          <b>${r.nombre}</b>
+          ${r.celular ? `<a href="${waUrl}" target="_blank" title="Enviar WhatsApp" style="margin-left:8px; text-decoration:none; font-size:15px;">🟢</a>` : ''}
+          <br><small>CC: ${r.cedula}</small>
+        </td>
         <td><span class="badge-riesgo ${claseRiesgo}">Riesgo ${riesgoLimpio}</span></td>
         <td style="color:#3fb950; font-weight:700">${formatCOP(r.ganancia)}</td>
         <td><button class="btn-del" onclick="deleteRegistro('${r.docId}')">✕</button></td>
@@ -230,7 +241,7 @@
     }).join('');
 
     document.getElementById('tableWrapper').innerHTML = filtrados.length === 0 ? 
-      '<p style="padding:40px; text-align:center; color:#8b949e;">Sin registros</p>' : 
+      '<p style="padding:40px; text-align:center; color:#8b949e;">Sin registros encontrados</p>' : 
       `<table><thead><tr><th>Registro</th><th>Mes Cotiz.</th><th>Cliente</th><th>Riesgo</th><th>Ganancia</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
     
     updateStats(filter);
