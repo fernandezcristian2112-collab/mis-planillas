@@ -3,31 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>e-Trámites — Dashboard Pro</title>
+<title>e-Trámites — Executive Control</title>
 
 <!-- CONFIGURACIÓN PWA Y WEB APP -->
-<meta name="theme-color" content="#090d16">
+<meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="e-Trámites">
-<link rel="manifest" href="data:application/manifest+json;utf8,{%22name%22:%22e-Tr%C3%A1mites%20Planillas%22,%22short_name%22:%22e-Tr%C3%A1mites%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23090d16%22,%22theme_color%22:%22%23090d16%22,%22icons%22:[{%22src%22:%22https://cdn-icons-png.flaticon.com/512/3135/3135706.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+<link rel="manifest" href="data:application/manifest+json;utf8,{%22name%22:%22e-Tr%C3%A1mites%20Planillas%22,%22short_name%22:%22e-Tr%C3%A1mites%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23000000%22,%22theme_color%22:%22%23000000%22,%22icons%22:[{%22src%22:%22https://cdn-icons-png.flaticon.com/512/3135/3135706.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
 
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
   :root { 
-    --bg: #090d16; 
-    --surface: #111827; 
-    --surface-hover: #1f293d; 
-    --border: rgba(255, 255, 255, 0.08); 
-    --accent: #10b981; 
-    --accent-glow: rgba(16, 185, 129, 0.15);
-    --blue: #3b82f6; 
-    --gold: #f59e0b; 
+    --bg: #000000; 
+    --surface: #0f0f12; 
+    --surface-card: #141418;
+    --border: #22222a; 
+    --accent: #3b82f6; 
+    --accent-subtle: rgba(59, 130, 246, 0.1);
     --text: #f3f4f6; 
-    --muted: #9ca3af; 
+    --muted: #71717a; 
+    --success: #10b981;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -35,99 +34,92 @@
   body { 
     background: var(--bg); 
     color: var(--text); 
-    font-family: 'Plus Jakarta Sans', sans-serif; 
-    padding: 16px; 
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+    padding: 18px 14px; 
     min-height: 100vh; 
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
   
-  .container { max-width: 1050px; margin: 0 auto; }
+  .container { max-width: 1000px; margin: 0 auto; }
   
   header { 
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
     margin-bottom: 24px; 
-    padding-bottom: 16px;
+    padding-bottom: 14px;
     border-bottom: 1px solid var(--border);
   }
 
-  h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.5px; }
-  h1 span { color: var(--accent); }
+  .brand { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.3px; color: var(--text); }
+  .brand span { color: var(--accent); font-weight: 400; }
 
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
   .stat { 
     background: var(--surface); 
     border: 1px solid var(--border); 
-    border-radius: 16px; 
+    border-radius: 14px; 
     padding: 18px; 
-    position: relative;
-    overflow: hidden;
   }
-  .stat::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--stat-color, var(--accent)), transparent);
-  }
-  .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-  .stat-value { font-size: 24px; font-weight: 800; margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 22px; font-weight: 700; margin-top: 6px; letter-spacing: -0.5px; }
 
   .form-card { 
     background: var(--surface); 
     border: 1px solid var(--border); 
-    border-radius: 20px; 
+    border-radius: 16px; 
     padding: 22px; 
     margin-bottom: 24px; 
-    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
   }
+  .form-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.8px; margin-bottom: 16px; }
   .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
   .field-group { display: flex; flex-direction: column; gap: 6px; }
-  label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+  label { font-size: 11px; color: var(--muted); font-weight: 500; }
   input, select { 
-    background: #182234; 
+    background: var(--surface-card); 
     border: 1px solid var(--border); 
-    border-radius: 12px; 
+    border-radius: 10px; 
     padding: 12px 14px; 
     color: var(--text); 
     font-size: 14px; 
     outline: none; 
-    transition: all 0.2s;
+    transition: border-color 0.2s;
   }
-  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  input:focus, select:focus { border-color: var(--accent); }
 
   .btn-add { 
-    background: var(--accent); 
+    background: var(--text); 
     color: #000; 
     border: none; 
-    border-radius: 12px; 
-    padding: 16px; 
-    font-weight: 700; 
-    font-size: 14px;
+    border-radius: 10px; 
+    padding: 14px; 
+    font-weight: 600; 
+    font-size: 13px;
     cursor: pointer; 
     margin-top: 20px; 
     width: 100%; 
-    transition: all 0.2s;
+    transition: opacity 0.2s;
   }
-  .btn-add:active { transform: scale(0.99); opacity: 0.9; }
+  .btn-add:active { opacity: 0.8; }
 
   .btn-cierre { 
-    background: #202b3d; 
+    background: var(--surface); 
     color: var(--text); 
     border: 1px solid var(--border); 
-    border-radius: 10px; 
-    padding: 10px 16px; 
-    font-weight: 600; 
+    border-radius: 8px; 
+    padding: 8px 14px; 
+    font-weight: 500; 
     cursor: pointer; 
     font-size: 12px;
   }
   .btn-excel { 
-    background: #064e3b; 
-    color: #34d399; 
-    border: 1px solid rgba(52, 211, 153, 0.2); 
-    border-radius: 10px; 
+    background: transparent; 
+    color: var(--muted); 
+    border: 1px solid var(--border); 
+    border-radius: 8px; 
     padding: 10px 14px; 
-    font-weight: 600; 
+    font-weight: 500; 
     cursor: pointer; 
     font-size: 12px;
   }
@@ -135,61 +127,56 @@
   .table-container { 
     background: var(--surface); 
     border: 1px solid var(--border); 
-    border-radius: 20px; 
+    border-radius: 16px; 
     overflow-x: auto; 
-    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
   }
-  table { width: 100%; border-collapse: collapse; min-width: 700px; }
-  th { background: #162032; padding: 14px 16px; font-size: 11px; color: var(--muted); text-align: left; font-weight: 600; text-transform: uppercase; }
+  table { width: 100%; border-collapse: collapse; min-width: 680px; }
+  th { padding: 12px 16px; font-size: 11px; color: var(--muted); text-align: left; font-weight: 500; text-transform: uppercase; border-bottom: 1px solid var(--border); }
   td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid var(--border); }
   tr:last-child td { border-bottom: none; }
 
-  .badge-riesgo { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
-  .r1 { background: rgba(16, 185, 129, 0.15); color: #34d399; }
-  .r2 { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
-  .r3 { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-  .r4 { background: rgba(249, 115, 22, 0.15); color: #fb923c; }
-  .r5 { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+  .badge-riesgo { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; background: var(--surface-card); border: 1px solid var(--border); color: var(--muted); }
 
-  .btn-del { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 16px; opacity: 0.7; }
+  .btn-del { background: none; border: none; color: #f87171; cursor: pointer; font-size: 15px; opacity: 0.6; }
   .btn-del:hover { opacity: 1; }
 
-  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(8px); }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; width: 90%; max-width: 400px; }
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; width: 90%; max-width: 380px; }
 </style>
 </head> 
 <body>
 
 <div class="container">
   <header>
-    <h1>e-Trámites <span>.Control</span></h1>
-    <button class="btn-cierre" onclick="abrirCierre()">📊 Cierre Mensual</button>
+    <div class="brand">e-Trámites <span>/ Control</span></div>
+    <button class="btn-cierre" onclick="abrirCierre()">Resumen Mensual</button>
   </header>
   
   <div class="stats">
-    <div class="stat" style="--stat-color: var(--blue)"><div class="stat-label">Ganancia Histórica</div><div class="stat-value" id="statTotal">$0</div></div>
-    <div class="stat" style="--stat-color: var(--gold)"><div class="stat-label">Ganancia Mes Actual</div><div class="stat-value" style="color:var(--gold)" id="statMes">$0</div></div>
-    <div class="stat" style="--stat-color: var(--accent)"><div class="stat-label">Clientes Registrados</div><div class="stat-value" style="color:var(--accent)" id="statClientes">0</div></div>
+    <div class="stat"><div class="stat-label">Ganancia Histórica</div><div class="stat-value" id="statTotal">$0</div></div>
+    <div class="stat"><div class="stat-label">Mes Actual</div><div class="stat-value" style="color:var(--accent)" id="statMes">$0</div></div>
+    <div class="stat"><div class="stat-label">Clientes</div><div class="stat-value" id="statClientes">0</div></div>
   </div>
 
   <div class="form-card">
+    <div class="form-title">Nuevo Registro</div>
     <div class="form-grid">
-      <div class="field-group"><label>Fecha Registro</label><input type="date" id="fecha"></div>
+      <div class="field-group"><label>Fecha</label><input type="date" id="fecha"></div>
       <div class="field-group"><label>Mes Cotización</label><input type="month" id="mesCotizacion"></div>
-      <div class="field-group"><label>Cédula Cliente</label><input type="tel" id="cedula" inputmode="numeric" placeholder="12345..."></div>
+      <div class="field-group"><label>Cédula</label><input type="tel" id="cedula" inputmode="numeric" placeholder="12345..."></div>
       <div class="field-group"><label>Nombre Completo</label><input type="text" id="nombre"></div>
       <div class="field-group"><label>Celular</label><input type="tel" id="celular" inputmode="tel" placeholder="3001234567"></div>
       <div class="field-group"><label>Correo</label><input type="email" id="correo"></div>
       <div class="field-group"><label>Riesgo ARL</label><select id="riesgo"><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></div>
       <div class="field-group"><label>Ganancia ($)</label><input type="number" id="ganancia" value="50000"></div>
     </div>
-    <button class="btn-add" onclick="addRegistro()">+ Registrar Ganancia</button>
+    <button class="btn-add" onclick="addRegistro()">Guardar Registro</button>
   </div>
 
   <div style="margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap: wrap;">
     <select id="filtroMes" onchange="render()" style="max-width:160px;"></select>
     <input type="text" id="buscarCliente" placeholder="🔍 Buscar cliente..." oninput="render()" style="max-width:200px;">
-    <button class="btn-excel" onclick="exportarExcel()">📥 Exportar Excel</button>
+    <button class="btn-excel" onclick="exportarExcel()">Descargar Excel</button>
   </div>
 
   <div class="table-container">
@@ -199,7 +186,7 @@
 
 <div class="modal-bg" id="modalBg" onclick="this.style.display='none'">
   <div class="modal" onclick="event.stopPropagation()">
-    <h2 style="margin-bottom:16px; font-size:1.2rem;">📊 Resumen de Cierre</h2>
+    <h2 style="margin-bottom:16px; font-size:1.1rem; font-weight:600;">Resumen del Mes</h2>
     <div id="modalContent"></div>
     <button class="btn-add" style="margin-top:20px" onclick="document.getElementById('modalBg').style.display='none'">Cerrar</button>
   </div>
@@ -224,7 +211,6 @@
   const colRef = collection(db, "planillas");
 
   let registros = [];
-  const riesgoClass = { I:'r1', II:'r2', III:'r3', IV:'r4', V:'r5', '1':'r1', '2':'r2', '3':'r3', '4':'r4', '5':'r5' };
 
   onSnapshot(query(colRef, orderBy("id", "desc")), (snapshot) => {
     registros = snapshot.docs.map(doc => ({ ...doc.data(), docId: doc.id }));
@@ -240,7 +226,7 @@
         document.getElementById('nombre').value = cliente.nombre;
         document.getElementById('celular').value = cliente.celular;
         document.getElementById('correo').value = cliente.correo || '';
-        e.target.style.borderColor = '#10b981';
+        e.target.style.borderColor = '#3b82f6';
       }
     }
   });
@@ -307,21 +293,20 @@
 
     const rows = filtrados.map(r => {
       const riesgoLimpio = r.riesgo ? r.riesgo.trim() : 'I';
-      const claseRiesgo = riesgoClass[riesgoLimpio] || 'r1';
       const waText = encodeURIComponent(`Hola ${r.nombre}, confirmamos la planilla de SS correspondiente al mes de ${r.mesCotizacion}. ¡Gracias por elegir e-Trámites!`);
       const waUrl = r.celular ? `https://wa.me/57${r.celular}?text=${waText}` : '#';
 
       return `
       <tr>
         <td style="color:var(--muted); font-size:12px">${(!r.fecha || r.fecha === 'undefined') ? '—' : r.fecha}</td>
-        <td style="color:var(--gold); font-weight:600">${r.mesCotizacion || '—'}</td>
+        <td style="color:var(--accent); font-weight:500">${r.mesCotizacion || '—'}</td>
         <td>
-          <b style="font-size:14px">${r.nombre}</b>
+          <b style="font-size:13px; font-weight:600">${r.nombre}</b>
           ${r.celular ? `<a href="${waUrl}" target="_blank" title="Enviar WhatsApp" style="margin-left:6px; text-decoration:none;">💬</a>` : ''}
           <br><span style="color:var(--muted); font-size:11px">CC: ${r.cedula}</span>
         </td>
-        <td><span class="badge-riesgo ${claseRiesgo}">Riesgo ${riesgoLimpio}</span></td>
-        <td style="color:var(--accent); font-weight:700; font-family:'JetBrains Mono', monospace">${formatCOP(r.ganancia)}</td>
+        <td><span class="badge-riesgo">Riesgo ${riesgoLimpio}</span></td>
+        <td style="font-weight:600">${formatCOP(r.ganancia)}</td>
         <td><button class="btn-del" onclick="deleteRegistro('${r.docId}')">✕</button></td>
       </tr>`
     }).join('');
@@ -345,7 +330,7 @@
     document.getElementById('statMes').textContent = formatCOP(gananciaMes);
     
     const labelMes = document.querySelector('.stat:nth-child(2) .stat-label');
-    labelMes.textContent = (filter === 'todos') ? `Ganancia Mes Actual (${hoy})` : `Ganancia de ${filter}`;
+    labelMes.textContent = (filter === 'todos') ? `Mes Actual (${hoy})` : `Ganancia de ${filter}`;
     
     document.getElementById('statClientes').textContent = new Set(registros.map(r => r.cedula)).size;
   }
@@ -367,9 +352,9 @@
     const total = delMes.reduce((s,r) => s + r.ganancia, 0);
     
     document.getElementById('modalContent').innerHTML = `
-      <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); font-size:14px"><span>Periodo:</span><b>${mesABuscar}</b></div>
-      <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); font-size:14px"><span>Total Trámites:</span><b>${delMes.length}</b></div>
-      <div style="display:flex; justify-content:space-between; padding:16px 0; color:var(--accent); font-size:22px; font-weight:800; font-family:'JetBrains Mono', monospace"><span>GANANCIA:</span><b>${formatCOP(total)}</b></div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px"><span>Periodo:</span><b>${mesABuscar}</b></div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px"><span>Total Trámites:</span><b>${delMes.length}</b></div>
+      <div style="display:flex; justify-content:space-between; padding:14px 0; font-size:18px; font-weight:700"><span>Ganancia:</span><b style="color:var(--accent)">${formatCOP(total)}</b></div>
     `;
     document.getElementById('modalBg').style.display = 'flex';
   };
